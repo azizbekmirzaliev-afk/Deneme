@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="uz" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kamolon Barista Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        kamolon: { 50: '#fdf8f6', 100: '#f2e8e5', 500: '#d97706', 600: '#b45309', 900: '#78350f', 950: '#451a03' }
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; user-select: none; -webkit-user-select: none; }
+        .glass-panel { background: rgba(30, 27, 24, 0.85); backdrop-filter: blur(12px); }
+        @keyframes pulse-slow { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }
+        .animate-pulse-slow { animation: pulse-slow 3s ease-in-out infinite; }
+    </style>
+</head>
+<body class="bg-stone-950 text-stone-100 min-h-screen flex items-center justify-center p-0 sm:p-4">
+    <div id="app" class="w-full max-w-md sm:max-w-xl bg-stone-900 sm:rounded-3xl shadow-2xl border border-stone-800 overflow-hidden flex flex-col h-[100dvh] sm:h-[840px] relative">
+        <!-- Header -->
+        <header class="flex items-center justify-between px-5 py-4 border-b border-stone-800 bg-stone-900/90 z-10">
+            <div class="flex items-center gap-2">
+                <span class="text-2xl">☕</span>
+                <span class="font-extrabold text-amber-500 tracking-wide text-lg">KAMOLON BAR</span>
+            </div>
+            <div id="header-stats" class="flex items-center gap-3 text-sm">
+                <span id="stat-score" class="px-3 py-1 bg-amber-500/10 text-amber-400 rounded-full font-bold border border-amber-500/20">⭐ 0.0</span>
+                <span id="stat-money" class="px-3 py-1 bg-emerald-500/10 text-emerald-400 rounded-full font-bold border border-emerald-500/20">💰 0 so'm</span>
+            </div>
+        </header>
+
+        <!-- Main Screen Viewport -->
+        <main id="main-view" class="flex-1 flex flex-col overflow-y-auto p-4 sm:p-6 justify-between relative">
+            <!-- Dinamik ekran içeriği buraya yüklenecek -->
+        </main>
+    </div>
+
+    <script>
+        const INGREDIENTS = [
+            { id: 'single_shot_espresso', name: 'Single shot espresso (10 gr)', cat: 'qahva_sut', color: '#4a2511', e: '☕' },
+            { id: 'double_shot_espresso', name: 'Double shot espresso (18 gr)', cat: 'qahva_sut', color: '#3b1d0d', e: '☕☕' },
+            { id: 'sut', name: 'Sut', cat: 'qahva_sut', color: '#f5f5f4', e: '🥛' },
+            { id: 'qaymoq', name: 'Qaymoq 20%', cat: 'qahva_sut', color: '#fef3c7', e: '🍶' },
+            { id: 'kopirtirilgan_qaymoq', name: 'Ko‘pirtirilgan qaymoq', cat: 'qahva_sut', color: '#ffffff', e: '🍥' },
+            { id: 'muzqaymoq', name: 'Muzqaymoq', cat: 'qahva_sut', color: '#fae8ff', e: '🍨' },
+            { id: 'pechenye', name: 'Pechenye', cat: 'qahva_sut', color: '#d97706', e: '🍪' },
+
+            { id: 'suv', name: 'Suv', cat: 'choy_suv', color: '#38bdf8', e: '💧' },
+            { id: 'gazli_suv', name: 'Gazli suv', cat: 'choy_suv', color: '#7dd3fc', e: '🫧' },
+            { id: 'qaynoq_suv', name: 'Qaynoq suv', cat: 'choy_suv', color: '#ea580c', e: '♨️' },
+            { id: 'earl_grey_paketi', name: 'Earl Grey paketi', cat: 'choy_suv', color: '#1e3a8a', e: '🫖' },
+            { id: 'earl_grey_ahmad', name: 'Earl Grey Ahmad paketi', cat: 'choy_suv', color: '#172554', e: '🍵' },
+            { id: 'earl_grey_choyi', name: 'Earl Grey choyi (quruq)', cat: 'choy_suv', color: '#1e293b', e: '🍵' },
+            { id: 'qora_choy', name: 'Qora choy', cat: 'choy_suv', color: '#451a03', e: '🫖' },
+            { id: 'jasmin_choyi', name: 'Jasmin choyi', cat: 'choy_suv', color: '#fef08a', e: '🌼' },
+            { id: 'muzli_choy_konsentrati', name: 'Muzli choy konsentrati', cat: 'choy_suv', color: '#ca8a04', e: '🫖' },
+
+            { id: 'olma', name: 'Olma', cat: 'meva_kokat', color: '#84cc16', e: '🍎' },
+            { id: 'limon', name: 'Limon (bo‘lak)', cat: 'meva_kokat', color: '#facc15', e: '🍋' },
+            { id: 'apelsin', name: 'Apelsin', cat: 'meva_kokat', color: '#fb923c', e: '🍊' },
+            { id: 'laym', name: 'Laym', cat: 'meva_kokat', color: '#a3e635', e: '🍈' },
+            { id: 'kivi', name: 'Kivi', cat: 'meva_kokat', color: '#4ade80', e: '🥝' },
+            { id: 'bodring', name: 'Bodring', cat: 'meva_kokat', color: '#22c55e', e: '🥒' },
+            { id: 'otquloq', name: 'Otquloq', cat: 'meva_kokat', color: '#15803d', e: '🌿' },
+            { id: 'ismaloq', name: 'Ismaloq', cat: 'meva_kokat', color: '#166534', e: '🥬' },
+            { id: 'yalpiz', name: 'Yalpiz', cat: 'meva_kokat', color: '#10b981', e: '🌱' },
+
+            { id: 'asal', name: 'Asal', cat: 'siroplar', color: '#eab308', e: '🍯' },
+            { id: 'shakar_sirop', name: 'Shakar sirop', cat: 'siroplar', color: '#fef08a', e: '🍬' },
+            { id: 'mango_sirop', name: 'Mango sirop', cat: 'siroplar', color: '#fbbf24', e: '🥭' },
+            { id: 'qulupnay_sirop', name: 'Qulupnay sirop', cat: 'siroplar', color: '#f43f5e', e: '🍓' },
+            { id: 'kivi_sirop', name: 'Kivi sirop', cat: 'siroplar', color: '#86efac', e: '🥝' },
+            { id: 'tarxun_sirop', name: 'Tarxun sirop', cat: 'siroplar', color: '#34d399', e: '🍃' },
+            { id: 'meva_sirop', name: 'Meva sirop', cat: 'siroplar', color: '#fb7185', e: '🧪' },
+            { id: 'apelsin_sirop', name: 'Apelsin sirop', cat: 'siroplar', color: '#f97316', e: '🍊' },
+            { id: 'vanilya_sirop', name: 'Vanilya sirop', cat: 'siroplar', color: '#fef9c3', e: '🍦' },
+            { id: 'odatiy_sirop', name: 'Sirop (oddiy)', cat: 'siroplar', color: '#fde047', e: '🍯' },
+            { id: 'yagodni_sirop', name: 'Yagodni sirop', cat: 'siroplar', color: '#9f1239', e: '🍇' },
+
+            { id: 'zanjabil_pyure', name: 'Zanjabil pyure', cat: 'pyurelar', color: '#d97706', e: '🫚' },
+            { id: 'mango_pyure', name: 'Mango pyure', cat: 'pyurelar', color: '#f59e0b', e: '🥭' },
+            { id: 'malina_pyuresi', name: 'Malina pyuresi', cat: 'pyurelar', color: '#e11d48', e: '🔴' },
+            { id: 'marakuya_pyure', name: 'Marakuya pyure', cat: 'pyurelar', color: '#facc15', e: '🟡' },
+            { id: 'qulupnay_pyure', name: 'Qulupnay pyure', cat: 'pyurelar', color: '#fb7185', e: '🍓' },
+            { id: 'kivi_pyure', name: 'Kivi pyure', cat: 'pyurelar', color: '#4ade80', e: '🟢' },
+
+            { id: 'olcha_sok', name: 'Olcha sok', cat: 'sharbatlar', color: '#881337', e: '🍒' },
+            { id: 'apelsin_sok', name: 'Apelsin sok', cat: 'sharbatlar', color: '#ea580c', e: '🧃' },
+            { id: 'ananas_sok', name: 'Ananas sok', cat: 'sharbatlar', color: '#facc15', e: '🍍' },
+            { id: 'olma_sok', name: 'Olma sok', cat: 'sharbatlar', color: '#bef264', e: '🍹' },
+            { id: 'lavlagi_fresh', name: 'Lavlagi fresh', cat: 'sharbatlar', color: '#701a75', e: '🟣' },
+            { id: 'limon_fresh', name: 'Limon fresh', cat: 'sharbatlar', color: '#fde047', e: '🍋‍🟩' },
+            { id: 'muz', name: 'Muz', cat: 'sharbatlar', color: '#e0f2fe', e: '🧊' },
+
+            { id: 'apelsin_qobigi', name: 'Apelsin qobig‘i (zedra)', cat: 'ziravorlar', color: '#c2410c', e: '🧡' },
+            { id: 'quritilgan_qovun', name: 'Quritilgan qovun', cat: 'ziravorlar', color: '#fde047', e: '🍈' },
+            { id: 'quritilgan_olma', name: 'Quritilgan olma', cat: 'ziravorlar', color: '#d9f99d', e: '🍏' },
+            { id: 'mayiz', name: 'Mayiz (kishmish)', cat: 'ziravorlar', color: '#78350f', e: '🍇' },
+            { id: 'turshak', name: 'Turshak (kuraga)', cat: 'ziravorlar', color: '#c2410c', e: '🍑' },
+            { id: 'dolchin_chopcha', name: 'Dolchin cho‘pcha', cat: 'ziravorlar', color: '#78350f', e: '🪵' },
+            { id: 'chinnigul', name: 'Chinnigul', cat: 'ziravorlar', color: '#451a03', e: '🌸' },
+            { id: 'badyan', name: 'Badyan (yulduzsimon qizilmiya)', cat: 'ziravorlar', color: '#9a3412', e: '⭐' },
+            { id: 'muskat_yongogi', name: 'Muskat yong‘og‘i', cat: 'ziravorlar', color: '#b45309', e: '🌰' },
+            { id: 'murch', name: 'Murch (perets)', cat: 'ziravorlar', color: '#292524', e: '🌶️' },
+            { id: 'maydalangan_zanjabil', name: 'Maydalangan zanjabil', cat: 'ziravorlar', color: '#d97706', e: '🟤' },
+            { id: 'maydalangan_dolchin', name: 'Maydalangan dolchin', cat: 'ziravorlar', color: '#92400e', e: '🟫' },
+            { id: 'kardamon', name: 'Kardamon', cat: 'ziravorlar', color: '#15803d', e: '🫛' }
+        ];
+
+        const INGMAP = Object.fromEntries(INGREDIENTS.map(i => [i.id, i]));
+
+        const RECIPES = [
+            { cat: 'olib_ketishga_choylar', name: 'Glintveyn', items: [{id:'olcha_sok', a:'200 ml'}, {id:'olma', a:'20 gr'}, {id:'limon', a:'15 gr'}, {id:'apelsin', a:'15 gr'}, {id:'dolchin_chopcha', a:'3 gr'}, {id:'chinnigul', a:'1 gr'}, {id:'badyan', a:'1 gr'}, {id:'asal', a:'30 gr'}] },
+            { cat: 'olib_ketishga_choylar', name: 'Zanjabil choyi', items: [{id:'zanjabil_pyure', a:'15 gr'}, {id:'apelsin', a:'15 gr'}, {id:'apelsin_sok', a:'50 ml'}, {id:'asal', a:'30 gr'}, {id:'limon_fresh', a:'20 ml'}, {id:'qaynoq_suv', a:'200 ml'}] },
+            { cat: 'olib_ketishga_choylar', name: 'Lime Earl Grey', items: [{id:'laym', a:'50 gr'}, {id:'earl_grey_paketi', a:'1 dona'}, {id:'marakuya_pyure', a:'30 gr'}, {id:'asal', a:'30 gr'}, {id:'qaynoq_suv', a:'200 ml'}] },
+            { cat: 'olib_ketishga_choylar', name: 'Yagodni choy', items: [{id:'malina_pyuresi', a:'15 gr'}, {id:'yagodni_sirop', a:'20 ml'}, {id:'shakar_sirop', a:'15 ml'}, {id:'limon_fresh', a:'20 ml'}, {id:'limon', a:'15 gr'}, {id:'apelsin', a:'15 gr'}, {id:'yalpiz', a:'1.5 gr'}, {id:'earl_grey_ahmad', a:'1 dona'}, {id:'qaynoq_suv', a:'200 ml'}] },
+            
+            { cat: 'detokslar', name: 'Sitrus va otquloq', items: [{id:'apelsin', a:'100 gr'}, {id:'otquloq', a:'20 gr'}, {id:'olma', a:'85 gr'}, {id:'limon_fresh', a:'30 ml'}, {id:'ananas_sok', a:'180 ml'}, {id:'muz', a:'3 kubik'}] },
+            { cat: 'detokslar', name: 'Yashil smuzi', items: [{id:'olma_sok', a:'150 ml'}, {id:'kivi', a:'100 gr'}, {id:'ismaloq', a:'20 gr'}, {id:'olma', a:'85 gr'}, {id:'muz', a:'3 kubik'}] },
+            { cat: 'detokslar', name: 'Lavlagi va apelsin', items: [{id:'lavlagi_fresh', a:'50 ml'}, {id:'apelsin', a:'100 gr'}, {id:'apelsin_sok', a:'200 ml'}, {id:'zanjabil_pyure', a:'10 gr'}] },
+            { cat: 'detokslar', name: 'Bodring va zanjabil', items: [{id:'asal', a:'30 gr'}, {id:'yalpiz', a:'2 gr'}, {id:'bodring', a:'200 gr'}, {id:'zanjabil_pyure', a:'15 gr'}, {id:'suv', a:'200 ml'}] },
+
+            { cat: 'limonadlar', name: 'Mango - Marakuya', items: [{id:'mango_sirop', a:'45 ml'}, {id:'marakuya_pyure', a:'30 gr'}, {id:'limon_fresh', a:'30 ml'}, {id:'yalpiz', a:'3 gr'}, {id:'gazli_suv', a:'250 ml'}, {id:'limon', a:'20 gr'}, {id:'apelsin', a:'50 gr'}, {id:'shakar_sirop', a:'15 ml'}] },
+            { cat: 'limonadlar', name: 'Qulupnayli Mohito', items: [{id:'qulupnay_sirop', a:'45 ml'}, {id:'qulupnay_pyure', a:'30 gr'}, {id:'shakar_sirop', a:'15 ml'}, {id:'limon_fresh', a:'30 ml'}, {id:'yalpiz', a:'3 gr'}, {id:'gazli_suv', a:'250 ml'}, {id:'apelsin', a:'50 gr'}, {id:'laym', a:'50 gr'}] },
+            { cat: 'limonadlar', name: 'Klassik Mohito', items: [{id:'laym', a:'50 gr'}, {id:'shakar_sirop', a:'60 ml'}, {id:'yalpiz', a:'5 gr'}, {id:'limon_fresh', a:'40 ml'}, {id:'apelsin_sok', a:'40 ml'}, {id:'gazli_suv', a:'250 ml'}, {id:'apelsin', a:'50 gr'}] },
+
+            { cat: 'qahva', name: 'Espresso Doppio', items: [{id:'double_shot_espresso', a:'30 ml'}] },
+            { cat: 'qahva', name: 'Americano', items: [{id:'double_shot_espresso', a:'18 gr'}, {id:'suv', a:'250 ml'}, {id:'pechenye', a:'15 gr'}] },
+            { cat: 'qahva', name: 'Cappuccino', items: [{id:'single_shot_espresso', a:'10 gr'}, {id:'sut', a:'220 ml'}, {id:'pechenye', a:'15 gr'}] },
+            { cat: 'qahva', name: 'Latte', items: [{id:'single_shot_espresso', a:'10 gr'}, {id:'sut', a:'250 ml'}, {id:'pechenye', a:'15 gr'}] },
+            { cat: 'qahva', name: 'Raf', items: [{id:'single_shot_espresso', a:'10 gr'}, {id:'qaymoq', a:'120 ml'}, {id:'vanilya_sirop', a:'20 ml'}, {id:'sut', a:'100 ml'}] }
+        ];
+
+        const FACES = ["🧑‍🦰", "👩‍🦱", "👨‍🦳", "👩", "🧔", "👵", "👦", "🧑‍🎓", "👨‍💼"];
+
+        let gameState = {
+            screen: 'title',
+            mode: 'shift',
+            queue: [],
+            currentIndex: 0,
+            scores: [],
+            money: 0,
+            selectedIngredients: [],
+            hintUsed: false,
+            currentCategory: 'qahva_sut',
+            currentCustomerFace: FACES[0],
+            searchQuery: ''
+        };
+
+        function render() {
+            const main = document.getElementById('main-view');
+            const statScore = document.getElementById('stat-score');
+            const statMoney = document.getElementById('stat-money');
+
+            if (gameState.screen === 'playing' || gameState.screen === 'eval') {
+                const avgScore = gameState.scores.length ? (gameState.scores.reduce((a,b)=>a+b,0)/gameState.scores.length).toFixed(1) : "10.0";
+                statScore.innerText = `⭐ ${avgScore}`;
+                statMoney.innerText = `💰 ${gameState.money.toLocaleString()} so'm`;
+                statScore.parentElement.classList.remove('hidden');
+            } else {
+                statScore.parentElement.classList.add('hidden');
+            }
+
+            if (gameState.screen === 'title') {
+                main.innerHTML = `
+                    <div class="text-center my-auto py-6">
+                        <div class="w-24 h-24 bg-amber-600/20 border-2 border-amber-500 rounded-3xl mx-auto flex items-center justify-center text-5xl mb-6 shadow-xl animate-pulse-slow">☕</div>
+                        <h1 class="text-3xl font-extrabold text-amber-500 mb-2">Kamolon Barista Pro</h1>
+                        <p class="text-stone-400 text-sm mb-8 px-4">O'zbekistonning eng sara choylari, detokslari va qahvalarini tayyorlang!</p>
+                        
+                        <div class="space-y-3 max-w-sm mx-auto w-full">
+                            <button onclick="startShift()" class="w-full py-4 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-bold rounded-2xl shadow-lg transition transform active:scale-98 flex items-center justify-center gap-2 text-lg">
+                                <span>🚀 Smenani Boshlash</span>
+                            </button>
+                            <button onclick="openRecipeBook()" class="w-full py-3.5 bg-stone-800 hover:bg-stone-700 text-stone-200 font-semibold rounded-2xl border border-stone-700 transition flex items-center justify-center gap-2">
+                                <span>📖 Retseptlar Kitobi</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="text-center text-xs text-stone-500 pt-4">Kamolon Lokanti &copy; 2026</div>
+                `;
+            } else if (gameState.screen === 'playing') {
+                const recipe = gameState.queue[gameState.currentIndex];
+                const activeCatIngredients = INGREDIENTS.filter(i => i.cat === gameState.currentCategory && (gameState.searchQuery === '' || i.name.toLowerCase().includes(gameState.searchQuery.toLowerCase())));
+                
+                const glassItemsHTML = gameState.selectedIngredients.map((id, idx) => {
+                    const ing = INGMAP[id];
+                    return `<span onclick="removeIng('${id}')" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-stone-800 border border-stone-700 rounded-xl text-xs font-medium text-stone-200 cursor-pointer hover:bg-red-950/40 hover:border-red-800 transition shadow-sm">
+                        <span>${ing.e}</span><span>${ing.name.split('(')[0]}</span> <span class="text-stone-500">✕</span>
+                    </span>`;
+                }).join('') || '<span class="text-stone-500 text-xs italic">Stakan hali bo‘sh. Masalliqlarni tanlang!</span>';
+
+                main.innerHTML = `
+                    <div class="flex justify-between items-center text-xs font-semibold text-stone-400 mb-3 px-1">
+                        <span>Mijoz ${gameState.currentIndex + 1} / ${gameState.queue.length}</span>
+                        <span class="text-amber-400 font-bold uppercase tracking-wider">${recipe.cat.replace('_', ' ')}</span>
+                    </div>
+
+                    <div class="bg-stone-800/90 border border-stone-700/80 rounded-2xl p-4 mb-3 flex items-center gap-4 shadow-lg">
+                        <div class="text-4xl p-2 bg-stone-900 rounded-2xl border border-stone-700 shrink-0">${gameState.currentCustomerFace}</div>
+                        <div class="flex-1">
+                            <p class="text-xs text-stone-400 mb-0.5 font-medium">Mehmon buyurtmasi:</p>
+                            <p class="text-sm font-bold text-stone-100">"Assalomu alaykum! Menga <span class="text-amber-400 underline decoration-amber-500/50">${recipe.name}</span> tayyorlab bering, iltimos."</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-stone-950/80 border border-stone-800 rounded-2xl p-3 mb-3 flex flex-col justify-between shadow-inner min-h-[110px]">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-[11px] font-semibold text-stone-400">🥤 Sizning stakaningiz</span>
+                            <div class="flex gap-1.5">
+                                <button onclick="useHint()" class="px-2.5 py-1 bg-amber-600/20 text-amber-400 hover:bg-amber-600/30 border border-amber-500/30 rounded-lg text-xs font-medium transition">📖 Retsept (−1.5b)</button>
+                                <button onclick="clearGlass()" class="px-2.5 py-1 bg-stone-800 text-stone-300 hover:bg-stone-700 border border-stone-700 rounded-lg text-xs font-medium transition">🗑 Tozalash</button>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap gap-1.5 min-h-[50px] items-center py-1">
+                            ${glassItemsHTML}
+                        </div>
+                    </div>
+
+                    <div class="flex gap-1.5 overflow-x-auto pb-2 mb-2 no-scrollbar">
+                        ${[
+                            {id: 'qahva_sut', l: '☕ Qahva/Sut'},
+                            {id: 'choy_suv', l: '🫖 Choy/Suv'},
+                            {id: 'meva_kokat', l: '🍎 Meva/Ko‘kat'},
+                            {id: 'siroplar', l: '🍯 Sirop/Asal'},
+                            {id: 'pyurelar', l: '🥭 Pyure'},
+                            {id: 'sharbatlar', l: '🧃 Sok/Muz'},
+                            {id: 'ziravorlar', l: '🪵 Ziravor'}
+                        ].map(c => `
+                            <button onclick="setCategory('${c.id}')" class="px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition ${gameState.currentCategory === c.id ? 'bg-amber-600 text-white shadow' : 'bg-stone-800 text-stone-400 hover:bg-stone-700 border border-stone-700'}">
+                                ${c.l}
+                            </button>
+                        `).join('')}
+                    </div>
+
+                    <div class="mb-2">
+                        <input type="text" placeholder="🔍 Masalliq izlash..." value="${gameState.searchQuery}" oninput="handleSearch(event)" class="w-full bg-stone-950 border border-stone-800 rounded-xl px-3 py-2 text-xs text-stone-200 focus:outline-none focus:border-amber-500">
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2 overflow-y-auto max-h-[170px] pr-1 mb-3">
+                        ${activeCatIngredients.map(ing => {
+                            const isSelected = gameState.selectedIngredients.includes(ing.id);
+                            return `
+                                <button onclick="toggleIngredient('${ing.id}')" class="p-2.5 rounded-xl border text-left transition flex flex-col justify-between h-[68px] ${isSelected ? 'bg-amber-950/40 border-amber-500 shadow-md ring-1 ring-amber-500' : 'bg-stone-900 border-stone-800 hover:border-stone-700 text-stone-300'}">
+                                    <span class="text-xl">${ing.e}</span>
+                                    <span class="text-[11px] font-medium leading-tight line-clamp-2">${ing.name.split('(')[0]}</span>
+                                </button>
+                            `;
+                        }).join('')}
+                    </div>
+
+                    <button onclick="serveDrink()" class="w-full py-3.5 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white font-bold rounded-2xl shadow-lg transition transform active:scale-98 flex items-center justify-center gap-2 text-base">
+                        <span>✅ Ichimlikni Berish</span>
+                    </button>
+                `;
+            } else if (gameState.screen === 'eval') {
+                const lastScore = gameState.scores[gameState.scores.length - 1];
+                const recipe = gameState.queue[gameState.currentIndex];
+                const requiredIds = recipe.items.map(i => i.id);
+                const hit = gameState.selectedIngredients.filter(id => requiredIds.includes(id)).length;
+
+                let comment = ['🤩', 'Zo‘r! Aynan men istagan ta’m!'];
+                if (lastScore < 10 && lastScore >= 8) comment = ['😊', 'Juda yaxshi, deyarli mukammal!'];
+                else if (lastScore < 8 && lastScore >= 6) comment = ['🙂', 'Yomon emas, lekin nimadir yetishmayapti.'];
+                else if (lastScore < 6 && lastScore >= 4) comment = ['😕', 'Ta’mi g‘alati… retsept biroz xato chiqdi.'];
+                else if (lastScore < 4) comment = ['😖', 'Bu men buyurtma qilgan narsa emas!'];
+
+                main.innerHTML = `
+                    <div class="text-center my-auto py-4">
+                        <div class="text-5xl mb-2 animate-bounce">${comment[0]}</div>
+                        <div class="text-4xl font-extrabold text-amber-500 mb-1">${lastScore} / 10</div>
+                        <p class="text-sm font-semibold text-stone-300 mb-4">${comment[1]}</p>
+
+                        <div class="bg-stone-950 border border-stone-800 rounded-2xl p-4 text-left mb-6 max-h-[220px] overflow-y-auto space-y-2">
+                            <p class="text-xs font-semibold text-stone-400 mb-2">Retsept solishtiruvi:</p>
+                            ${recipe.items.map(req => {
+                                const has = gameState.selectedIngredients.includes(req.id);
+                                const ing = INGMAP[req.id];
+                                return `<div class="flex items-center justify-between text-xs py-1 border-b border-stone-900">
+                                    <span class="${has ? 'text-emerald-400 font-medium' : 'text-rose-400 font-medium'}">${has ? '✅' : '❌'} ${ing.e} ${ing.name.split('(')[0]}</span>
+                                    <span class="text-stone-400">${req.a}</span>
+                                </div>`;
+                            }).join('')}
+                            ${gameState.selectedIngredients.filter(id => !requiredIds.includes(id)).map(id => {
+                                const ing = INGMAP[id];
+                                return `<div class="text-xs py-1 text-rose-400">➕ Ortiqcha: ${ing.e} ${ing.name.split('(')[0]}</div>`;
+                            }).join('')}
+                        </div>
+
+                        <button onclick="nextCustomer()" class="w-full py-4 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-bold rounded-2xl shadow-lg transition">
+                            ${gameState.currentIndex + 1 < gameState.queue.length ? 'Keyingi mijoz ▶' : 'Natijani Ko‘rish 🏁'}
+                        </button>
+                    </div>
+                `;
+            } else if (gameState.screen === 'gameover') {
+                const avg = gameState.scores.reduce((a,b)=>a+b,0) / gameState.queue.length;
+                let title = ['🏆', 'Barista Ustasi!'];
+                if (avg < 9.5 && avg >= 8) title = ['🥇', 'Tajribali Barista'];
+                else if (avg < 8 && avg >= 6) title = ['🥈', 'Yaxshi Barista'];
+                else if (avg < 6) title = ['📚', 'Retseptlarni Qayta O‘qing!'];
+
+                main.innerHTML = `
+                    <div class="text-center my-auto py-6">
+                        <div class="text-6xl mb-2">${title[0]}</div>
+                        <h2 class="text-2xl font-extrabold text-stone-100 mb-1">Smena Yakunlandi!</h2>
+                        <p class="text-amber-500 font-semibold mb-4">${title[1]}</p>
+                        <div class="text-5xl font-black text-amber-400 mb-2">${avg.toFixed(1)} / 10</div>
+                        <p class="text-xs text-stone-400 mb-6">Jami topilgan baho va mukofot: <b class="text-emerald-400">${gameState.money.toLocaleString()} so'm</b></p>
+
+                        <div class="space-y-3 max-w-sm mx-auto w-full">
+                            <button onclick="startShift()" class="w-full py-4 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-bold rounded-2xl shadow-lg transition">
+                                🔄 Qaytadan O‘ynash
+                            </button>
+                            <button onclick="goHome()" class="w-full py-3.5 bg-stone-800 hover:bg-stone-700 text-stone-200 font-semibold rounded-2xl border border-stone-700 transition">
+                                📋 Asosiy Menyu
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else if (gameState.screen === 'recipes') {
+                main.innerHTML = `
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-bold text-amber-500">📖 Retseptlar Kitobi</h2>
+                        <button onclick="goHome()" class="px-3 py-1.5 bg-stone-800 hover:bg-stone-700 rounded-xl text-xs font-semibold">🏠 Orqaga</button>
+                    </div>
+                    <div class="mb-3">
+                        <input type="text" placeholder="🔍 Ichimlik izlash..." oninput="handleRecipeSearch(event)" class="w-full bg-stone-950 border border-stone-800 rounded-xl px-3 py-2 text-xs text-stone-200 focus:outline-none focus:border-amber-500">
+                    </div>
+                    <div class="flex-1 overflow-y-auto space-y-3 pr-1 max-h-[500px]" id="recipe-list-container">
+                        ${renderRecipeList(RECIPES)}
+                    </div>
+                `;
+            }
+        }
+
+        function renderRecipeList(list) {
+            return list.map(r => `
+                <div class="bg-stone-950 border border-stone-800 rounded-2xl p-3.5 shadow-sm">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="font-bold text-amber-400 text-sm">${r.name}</span>
+                        <span class="text-[10px] px-2 py-0.5 bg-stone-800 text-stone-400 rounded-full uppercase">${r.cat.replace('_', ' ')}</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-1.5">
+                        ${r.items.map(i => {
+                            const ing = INGMAP[i.id];
+                            return `<div class="text-xs text-stone-300 bg-stone-900 px-2.5 py-1.5 rounded-xl border border-stone-800/80 flex items-center justify-between">
+                                <span class="truncate"><span>${ing ? ing.e : '🔹'}</span> <span class="ml-1">${ing ? ing.name.split('(')[0] : i.id}</span></span>
+                                <span class="text-stone-500 text-[11px] ml-2 shrink-0">${i.a}</span>
+                            </div>`;
+                        }).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function startShift() {
+            const shuffled = [...RECIPES].sort(() => Math.random() - 0.5);
+            gameState.queue = shuffled;
+            gameState.currentIndex = 0;
+            gameState.scores = [];
+            gameState.money = 0;
+            gameState.screen = 'playing';
+            setupNewCustomer();
+            render();
+        }
+
+        function setupNewCustomer() {
+            gameState.selectedIngredients = [];
+            gameState.hintUsed = false;
+            gameState.currentCustomerFace = FACES[Math.floor(Math.random() * FACES.length)];
+            gameState.searchQuery = '';
+        }
+
+        function setCategory(catId) {
+            gameState.currentCategory = catId;
+            render();
+        }
+
+        function toggleIngredient(id) {
+            const idx = gameState.selectedIngredients.indexOf(id);
+            if (idx > -1) {
+                gameState.selectedIngredients.splice(idx, 1);
+            } else {
+                gameState.selectedIngredients.push(id);
+            }
+            render();
+        }
+
+        function removeIng(id) {
+            const idx = gameState.selectedIngredients.indexOf(id);
+            if (idx > -1) {
+                gameState.selectedIngredients.splice(idx, 1);
+                render();
+            }
+        }
+
+        function clearGlass() {
+            gameState.selectedIngredients = [];
+            render();
+        }
+
+        function useHint() {
+            if (gameState.hintUsed) return;
+            gameState.hintUsed = true;
+            const recipe = gameState.queue[gameState.currentIndex];
+            const hintText = recipe.items.map(i => `${INGMAP[i.id].e} ${INGMAP[i.id].name.split('(')[0]} — ${i.a}`).join('\n');
+            alert(`📖 Retsept: ${recipe.name}\n\n${hintText}\n\n⚠️ Bu yordam uchun 1.5 ball ayriladi!`);
+            render();
+        }
+
+        function serveDrink() {
+            if (gameState.selectedIngredients.length === 0) {
+                alert("Stakan hali bo‘sh! Avval masalliqlarni tanlang.");
+                return;
+            }
+
+            const recipe = gameState.queue[gameState.currentIndex];
+            const requiredIds = recipe.items.map(i => i.id);
+            const hit = gameState.selectedIngredients.filter(id => requiredIds.includes(id)).length;
+            const extra = gameState.selectedIngredients.length - hit;
+            const hintPenalty = gameState.hintUsed ? 1.5 : 0;
+
+            let score = Math.max(0, (10 * hit / requiredIds.length) - (1.5 * extra) - hintPenalty);
+            score = Math.round(score * 2) / 2;
+
+            gameState.scores.push(score);
+            gameState.money += Math.round(score * 1500);
+            gameState.screen = 'eval';
+            render();
+        }
+
+        function nextCustomer() {
+            gameState.currentIndex++;
+            if (gameState.currentIndex < gameState.queue.length) {
+                gameState.screen = 'playing';
+                setupNewCustomer();
+            } else {
+                gameState.screen = 'gameover';
+            }
+            render();
+        }
+
+        function openRecipeBook() {
+            gameState.screen = 'recipes';
+            render();
+        }
+
+        function goHome() {
+            gameState.screen = 'title';
+            render();
+        }
+
+        function handleSearch(e) {
+            gameState.searchQuery = e.target.value;
+            render();
+        }
+
+        function handleRecipeSearch(e) {
+            const q = e.target.value.toLowerCase();
+            const filtered = RECIPES.filter(r => r.name.toLowerCase().includes(q));
+            document.getElementById('recipe-list-container').innerHTML = renderRecipeList(filtered);
+        }
+
+        render();
+    </script>
+</body>
+</html>
